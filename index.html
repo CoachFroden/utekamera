@@ -138,6 +138,7 @@ function loadStream(){
   ws.onclose=()=>{clearTimeout(timeout);if(!done)fail("Videoforbindelsen ble avsluttet ("+stage+").")};
 }
 
+  
 $("back").onclick=showHome;$("retry").onclick=loadStream;$("fullscreen").onclick=()=>{const el=$("screen");if(document.fullscreenElement)document.exitFullscreen();else el.requestFullscreen?.()};
 const initial=cameras.find(c=>c.id===decodeURIComponent(location.hash.slice(1)));if(initial)openCamera(initial);
 </script></body></html>
