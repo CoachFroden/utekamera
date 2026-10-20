@@ -17,7 +17,7 @@ let accessToken=null;
 const cleanHaUrl=value=>{try{const u=new URL(value);if(u.protocol!=="https:"||u.username||u.password||u.search||u.hash)return null;return u.origin}catch{return null}};
 $("haUrl").value=localStorage.getItem(HA_KEY)||"";
 function authStatus(message){$("authStatus").textContent=message}
-function base64url(bytes){return btoa(String.fromCharCode(...bytes)).replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,"")}
+function base64url(bytes){return btoa(String.fromCharCode(...bytes)).split("+").join("-").split("/").join("_").replace(/=+$/,"")}
 async function beginLogin(){
   const ha=cleanHaUrl($("haUrl").value);
   if(!ha){authStatus("Skriv inn en gyldig https-adresse til Home Assistant.");return}
