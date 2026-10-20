@@ -1,0 +1,11 @@
+# Legg dette inn i /config/configuration.yaml i Home Assistant.
+# Hvis du allerede har panel_custom:, legg bare til - name: ... under den eksisterende nøkkelen.
+panel_custom:
+  - name: utekamera-panel
+    url_path: utekamera
+    module_url: /local/utekamera/utekamera-panel.js?v=1
+    # Uten sidebar_title vises ikke panelet i sidemenyen.
+    config: {}
+
+# Kopier utekamera-panel.js til /config/www/utekamera/ og restart Home Assistant.
+# Åpne deretter https://DIN-HA-ADRESSE/utekamera
