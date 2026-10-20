@@ -150,6 +150,21 @@ function loadStream(){
 }
 
   
-$("back").onclick=showHome;$("retry").onclick=loadStream;$("fullscreen").onclick=()=>{const el=$("screen");if(document.fullscreenElement)document.exitFullscreen();else el.requestFullscreen?.()};
+$("back").onclick=showHome;$("retry").onclick=loadStream;$("fullscreen").onclick=async()=>{
+  const video=$("video"),screen=$("screen");
+  try{
+    if(document.fullscreenElement){await document.exitFullscreen();return}
+    // iPhone Safari does not support fullscreen on arbitrary HTML elements.
+    // Its native video fullscreen API must be called directly from the tap.
+    if(typeof video.webkitEnterFullscreen==="function"){
+      if(video.hidden||!video.currentSrc){$("hint").textContent="Vent til kamerabildet er klart før du åpner fullskjerm.";return}
+      video.webkitEnterFullscreen();
+      return;
+    }
+    if(typeof screen.requestFullscreen==="function"){await screen.requestFullscreen();return}
+    if(typeof video.requestFullscreen==="function"){await video.requestFullscreen();return}
+    $("hint").textContent="Fullskjerm støttes ikke av denne nettleseren.";
+  }catch(err){$("hint").textContent="Kunne ikke åpne fullskjerm: "+(err?.message||String(err))}
+};
 const initial=cameras.find(c=>c.id===decodeURIComponent(location.hash.slice(1)));if(initial)openCamera(initial);
 </script></body></html>
