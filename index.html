@@ -15,28 +15,39 @@ const HA_KEY="utekamera_ha_url";
 const AUTH_KEY="utekamera_oauth_pending";
 let accessToken=null;
 const cleanHaUrl=value=>{try{const u=new URL(value);if(u.protocol!=="https:"||u.username||u.password||u.search||u.hash)return null;return u.origin}catch{return null}};
-$("haUrl").value=localStorage.getItem(HA_KEY)||"";
+try{$("haUrl").value=localStorage.getItem(HA_KEY)||""}catch{$("haUrl").value=""}
 function authStatus(message){$("authStatus").textContent=message}
 function base64url(bytes){return btoa(String.fromCharCode(...bytes)).split("+").join("-").split("/").join("_").replace(/=+$/,"")}
 async function beginLogin(){
-  const ha=cleanHaUrl($("haUrl").value);
-  if(!ha){authStatus("Skriv inn en gyldig https-adresse til Home Assistant.");return}
-  localStorage.setItem(HA_KEY,ha);
-  if(!window.crypto?.subtle){authStatus("Sikker innlogging krever HTTPS.");return}
-  const verifier=base64url(crypto.getRandomValues(new Uint8Array(32)));
-  const challenge=base64url(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(verifier))));
-  const state=base64url(crypto.getRandomValues(new Uint8Array(24)));
-  const redirect=location.origin+location.pathname;
-  sessionStorage.setItem(AUTH_KEY,JSON.stringify({ha,verifier,state,redirect}));
-  const url=new URL("/auth/authorize",ha);
-  url.searchParams.set("response_type","code");
-  url.searchParams.set("client_id",location.origin);
-  url.searchParams.set("redirect_uri",redirect);
-  url.searchParams.set("state",state);
-  url.searchParams.set("code_challenge",challenge);
-  url.searchParams.set("code_challenge_method","S256");
-  location.assign(url.toString());
+  const button=$("connect");
+  button.disabled=true;
+  authStatus("Starter sikker innlogging …");
+  try{
+    const ha=cleanHaUrl($("haUrl").value.trim());
+    if(!ha)throw new Error("Skriv inn en gyldig https-adresse til Home Assistant.");
+    if(!window.crypto?.subtle)throw new Error("Safari støtter ikke sikker innlogging i denne konteksten. Åpne siden direkte i Safari over HTTPS.");
+    const verifier=base64url(crypto.getRandomValues(new Uint8Array(32)));
+    const challenge=base64url(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(verifier))));
+    const state=base64url(crypto.getRandomValues(new Uint8Array(24)));
+    const redirect=location.origin+location.pathname;
+    const url=new URL("/auth/authorize",ha);
+    url.searchParams.set("response_type","code");
+    url.searchParams.set("client_id",location.origin);
+    url.searchParams.set("redirect_uri",redirect);
+    url.searchParams.set("state",state);
+    url.searchParams.set("code_challenge",challenge);
+    url.searchParams.set("code_challenge_method","S256");
+    // Save only after crypto has succeeded. Safari private mode may block storage.
+    sessionStorage.setItem(AUTH_KEY,JSON.stringify({ha,verifier,state,redirect}));
+    try{localStorage.setItem(HA_KEY,ha)}catch{}
+    authStatus("Åpner Home Assistant …");
+    location.href=url.href;
+  }catch(err){
+    authStatus("Kunne ikke starte innlogging: "+(err?.message||String(err)));
+    button.disabled=false;
+  }
 }
+
 async function completeLogin(){
   const params=new URLSearchParams(location.search);
   if(!params.has("code")&&!params.has("error"))return;
@@ -55,7 +66,7 @@ async function completeLogin(){
     authStatus("Innlogging godkjent. Velg Utekamera for å teste videoforbindelsen.");
   }catch(err){authStatus("Kunne ikke fullføre innlogging fra denne adressen ("+err.message+"). Home Assistant kan blokkere forespørselen på tvers av domener.")}
 }
-$("connect").onclick=beginLogin;
+$("connect").addEventListener("click",beginLogin);
 completeLogin();
 $("count").textContent=cameras.length+" kamera";
 const cameraSvg='<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="18" width="35" height="29" rx="7"/><path d="m43 27 13-7v25l-13-7"/><circle cx="25" cy="32" r="9"/></svg>';
