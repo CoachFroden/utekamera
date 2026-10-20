@@ -9,7 +9,7 @@ class UtekameraPanel extends HTMLElement {
     this.shadowRoot.innerHTML=`
       <style>
         :host{display:block;min-height:100vh;background:#101c26;color:#ecf7fa;font:16px system-ui,sans-serif}
-        *{box-sizing:border-box}main{max-width:1050px;margin:auto;padding:34px 18px}
+        *{box-sizing:border-box}main{max-width:1050px;margin:auto;padding:clamp(12px,2vw,24px) 16px}
         h1{font-size:clamp(28px,5vw,42px);margin:8px 0}p{color:#9fb9c6}
         .eyebrow{color:#81d5d8;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
         .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:26px}
@@ -19,9 +19,9 @@ class UtekameraPanel extends HTMLElement {
         .info{padding:20px;display:flex;justify-content:space-between;align-items:center}
         small{display:block;color:#9fb9c6;margin-top:5px}.hidden{display:none!important}
         .back,.action{border:1px solid #466375;border-radius:12px;background:#203745;padding:10px 15px}
-        .viewer{margin-top:22px;background:#0b131b;border:1px solid #375364;border-radius:20px;overflow:hidden}
-        .viewerhead{padding:16px 20px;font-weight:700}.screen{min-height:230px;background:#000}
-        .actions{padding:14px;display:flex;gap:10px}
+        .viewer{margin-top:12px;background:#0b131b;border:1px solid #375364;border-radius:20px;overflow:hidden}
+        .viewerhead{padding:10px 16px;font-weight:700}.screen{background:#000;display:flex;align-items:center;justify-content:center;min-height:0;max-height:calc(100dvh - 190px);overflow:hidden}.screen>*{display:block;width:100%;max-height:inherit}.screen ha-card{overflow:hidden}.screen img,.screen video{max-height:calc(100dvh - 190px);object-fit:contain}@media(max-width:650px){main{padding:12px 8px}.screen{max-height:calc(100dvh - 165px)}.screen img,.screen video{max-height:calc(100dvh - 165px)}}
+        .actions{padding:8px 12px;display:flex;gap:10px}
         .error{padding:24px;color:#ffd2c6}
       </style>
       <main>
