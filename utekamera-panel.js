@@ -8,7 +8,7 @@ class UtekameraPanel extends HTMLElement {
     this._card=null;
     this.shadowRoot.innerHTML=`
       <style>
-        :host{display:block;min-height:100vh;background:#101c26;color:#ecf7fa;font:16px system-ui,sans-serif}
+        :host{display:block;min-height:100vh;background:#101c26;color:#ecf7fa;font:16px system-ui,sans-serif}:host(:fullscreen){width:100vw;height:100dvh;overflow:auto;background:#101c26}
         *{box-sizing:border-box}main{max-width:1050px;margin:auto;padding:clamp(12px,2vw,24px) 16px}
         h1{font-size:clamp(28px,5vw,42px);margin:8px 0}p{color:#9fb9c6}
         .eyebrow{color:#81d5d8;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
@@ -18,7 +18,7 @@ class UtekameraPanel extends HTMLElement {
         .thumb{height:160px;display:grid;place-items:center;background:linear-gradient(135deg,#294f61,#12202b);font-size:54px}
         .info{padding:20px;display:flex;justify-content:space-between;align-items:center}
         small{display:block;color:#9fb9c6;margin-top:5px}.hidden{display:none!important}
-        .back,.action{border:1px solid #466375;border-radius:12px;background:#203745;padding:10px 15px}
+        .back,.action{border:1px solid #466375;border-radius:12px;background:#203745;padding:10px 15px}.appbar{display:flex;justify-content:flex-end;margin-bottom:10px}.appmode{border:1px solid #65a7ad;border-radius:12px;background:#245365;color:#f0fdff;padding:9px 13px}
         .viewer{margin-top:12px;background:#0b131b;border:1px solid #375364;border-radius:20px;overflow:hidden}
         .viewerhead{padding:10px 16px;font-weight:700}.screen{background:#000;display:flex;align-items:center;justify-content:center;min-height:0;max-height:calc(100dvh - 190px);overflow:hidden}.screen>*{display:block;width:100%;max-height:inherit}.screen ha-card{overflow:hidden}.screen img,.screen video{max-height:calc(100dvh - 190px);object-fit:contain}@media(max-width:650px){main{padding:12px 8px}.screen{max-height:calc(100dvh - 165px)}.screen img,.screen video{max-height:calc(100dvh - 165px)}}
         .actions{padding:8px 12px;display:flex;gap:10px}
@@ -36,6 +36,19 @@ class UtekameraPanel extends HTMLElement {
       b.addEventListener("click",()=>this.open(c));root.getElementById("grid").append(b);
     }
     root.getElementById("back").addEventListener("click",()=>this.home());
+    const appButton=root.getElementById("appmode");
+    appButton.addEventListener("click",async()=>{
+      try {
+        if(document.fullscreenElement===this)await document.exitFullscreen();
+        else await this.requestFullscreen();
+      } catch(err) {
+        appButton.textContent="Fullskjerm støttes ikke her";
+        appButton.title=String(err?.message||err);
+      }
+    });
+    document.addEventListener("fullscreenchange",()=>{
+      appButton.textContent=document.fullscreenElement===this?"✕ Vis HA igjen":"⛶ Skjul HA-menyen";
+    });
     root.getElementById("fullscreen").addEventListener("click",()=>{
       const screen=root.getElementById("screen");
       if(document.fullscreenElement)document.exitFullscreen();else screen.requestFullscreen?.();
