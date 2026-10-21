@@ -13,6 +13,7 @@ const $=id=>document.getElementById(id);
 let selected=null;
 const HA_KEY="utekamera_ha_url";
 const AUTH_KEY="utekamera_oauth_pending";
+const SESSION_KEY="utekamera_auth_session";
 let accessToken=null;
 const cleanHaUrl=value=>{try{const u=new URL(value);if(u.protocol!=="https:"||u.username||u.password||u.search||u.hash)return null;return u.origin}catch{return null}};
 try{$("haUrl").value=localStorage.getItem(HA_KEY)||""}catch{$("haUrl").value=""}
@@ -62,12 +63,33 @@ async function completeLogin(){
     if(!response.ok)throw new Error("HTTP "+response.status);
     const data=await response.json();
     if(!data.access_token)throw new Error("Mangler tilgangstoken");
-    accessToken=data.access_token; // Kun i minnet; aldri lagret i GitHub eller localStorage.
+    accessToken=data.access_token;
+    if(data.refresh_token){try{localStorage.setItem(SESSION_KEY,JSON.stringify({ha:pending.ha,refreshToken:data.refresh_token}))}catch{}}
     authStatus("Innlogging godkjent. Velg Utekamera for å teste videoforbindelsen.");
   }catch(err){authStatus("Kunne ikke fullføre innlogging fra denne adressen ("+err.message+"). Home Assistant kan blokkere forespørselen på tvers av domener.")}
 }
 $("connect").addEventListener("click",beginLogin);
-completeLogin();
+async function restoreLogin(){
+  const params=new URLSearchParams(location.search);
+  if(params.has("code")||params.has("error")){await completeLogin();return}
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem(SESSION_KEY)||"null")}catch{}
+  if(!saved?.ha||!saved?.refreshToken)return;
+  authStatus("Gjenoppretter tilkoblingen automatisk …");
+  try{
+    const response=await fetch(saved.ha+"/auth/token",{method:"POST",body:new URLSearchParams({grant_type:"refresh_token",refresh_token:saved.refreshToken,client_id:location.origin})});
+    if(!response.ok)throw new Error("HTTP "+response.status);
+    const data=await response.json();
+    if(!data.access_token)throw new Error("Mangler tilgangstoken");
+    accessToken=data.access_token;
+    if(data.refresh_token){try{localStorage.setItem(SESSION_KEY,JSON.stringify({ha:saved.ha,refreshToken:data.refresh_token}))}catch{}}
+    authStatus("Tilkoblet automatisk. Velg kamera.");
+  }catch(err){
+    try{localStorage.removeItem(SESSION_KEY)}catch{}
+    authStatus("Automatisk innlogging mislyktes. Koble til Home Assistant på nytt.");
+  }
+}
+restoreLogin();
 $("count").textContent=cameras.length+" kamera";
 const cameraSvg='<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="18" width="35" height="29" rx="7"/><path d="m43 27 13-7v25l-13-7"/><circle cx="25" cy="32" r="9"/></svg>';
 for(const c of cameras){const b=document.createElement("button");b.className="camera";b.innerHTML='<div class="thumb"><span class="pill">● Kamera</span>'+cameraSvg+'</div><div class="info"><span><strong></strong><small></small></span><span class="arrow">→</span></div>';b.querySelector("strong").textContent=c.name;b.querySelector("small").textContent=c.subtitle;b.onclick=()=>openCamera(c);$("grid").append(b)}
